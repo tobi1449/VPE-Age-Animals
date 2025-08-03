@@ -1,64 +1,30 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-
-using UnityEngine;
+﻿using HarmonyLib;
+using VanillaPsycastsExpanded.Chronopath;
+using VEF.Abilities;
 using Verse;
-using Verse.AI;
-using Verse.AI.Group;
-using Verse.Sound;
-using Verse.Noise;
-using Verse.Grammar;
-using RimWorld;
-using RimWorld.Planet;
 
-// *Uncomment for Harmony*
-// using System.Reflection;
-// using HarmonyLib;
-
-namespace Template
+namespace VPE_Age_Animals
 {
-    [DefOf]
-    public class TemplateDefOf
-    {
-        public static LetterDef success_letter;
-    }
-
-    public class MyMapComponent : MapComponent
-    {
-        public MyMapComponent(Map map) : base(map){}
-        public override void FinalizeInit()
-        {
-            Messages.Message("Success", null, MessageTypeDefOf.PositiveEvent);
-            Find.LetterStack.ReceiveLetter(new TaggedString("Success"), new TaggedString("Success message"), TemplateDefOf.success_letter, "", 0);
-        }
-    }
-
     [StaticConstructorOnStartup]
-    public static class Start
+    public static class Main
     {
-        static Start()
+        static Main()
         {
-            Log.Message("Mod template loaded successfully!");
-
-            // *Uncomment for Harmony*
-            // Harmony harmony = new Harmony("Template");
-            // harmony.PatchAll( Assembly.GetExecutingAssembly() );
+            var harmony = new Harmony("tobi.VPE.Age.Animals");
+            harmony.PatchAll();
+            Log.Message("VPE Age Animals loaded successfully!");
         }
     }
 
-    // *Uncomment for Harmony*
-    // [HarmonyPatch(typeof(LetterStack), "ReceiveLetter")]
-    // [HarmonyPatch(new Type[] {typeof(TaggedString), typeof(TaggedString), typeof(LetterDef), typeof(string), typeof(int), typeof(bool)})]
-    public static class LetterTextChange
+    [HarmonyPatch(typeof(AbilityExtension_Age), nameof(AbilityExtension_Age.CanApplyOn))]
+    public static class AgePatch
     {
-        public static bool Prefix(ref TaggedString text)
+        static void Postfix(LocalTargetInfo target, Ability ability, bool throwMessages, ref bool __result)
         {
-            text += new TaggedString(" with harmony");
-            return true;
+            if (__result)
+                return;
+
+            __result = target.Thing is Pawn pawn && pawn.IsAnimal;
         }
     }
-
 }
